@@ -38,7 +38,8 @@ if __name__ == "__main__":
     # SUMI_ALLREDUCE_ALG also works and takes effect when this is unset.
     _alg = os.environ.get("ALG", "")
     if _alg:
-        os_params["app1.allreduce_alg"] = _alg
+        _alg_param = os.environ.get("ALG_PARAM", "allreduce_alg")
+        os_params["app1." + _alg_param] = _alg
     platform.addParamSet("operating_system", os_params)
 
     _nranks = int(os.environ.get("NRANKS", "8"))

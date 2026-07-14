@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright 2009-2026 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
@@ -26,12 +26,13 @@ if __name__ == "__main__":
 
     platform.addParamSet("operating_system", {
         "verbose" : "0",
-        "app1.name" : "allgather",
-        "app1.exe_library_name" : "allgather",
-        "app1.allgather_alg" : "ring",
+        "app1.name" : "ringallreduce",
+        "app1.exe_library_name" : "ringallreduce",
         "app1.dependencies" : ["sumi", ],
         "app1.libraries" : ["computelibrary:ComputeLibrary",
                             "mask_mpi:MpiApi",],
+        # Select the ring all-reduce (default is recursive doubling)
+        "app1.allreduce_alg" : "ring",
     })
 
     topo = topoSingle()
@@ -42,6 +43,6 @@ if __name__ == "__main__":
 
     system = System()
     system.setTopology(topo)
-    system.allocateNodes(ep,"linear")
+    system.allocateNodes(ep,"random",42)
 
     system.build()
