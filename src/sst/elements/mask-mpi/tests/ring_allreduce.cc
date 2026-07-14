@@ -46,14 +46,15 @@ Questions? Contact sst-macro-help@sandia.gov
 #define ssthg_app_name ringallreduce
 
 #include <stdio.h>
+#include <string.h>
 
 #include <mask_mpi.h>
 #include <mercury/common/skeleton.h>
 
 // Each rank contributes values[i] = i + rank, so every rank's reduced array
 // holds size*i + size*(size-1)/2. test_ring_allreduce.py selects the ring via
-// app1.allreduce_alg; nelems does not divide evenly by the rank count, which
-// covers remainder chunk sizing.
+// app1.collective.allreduce. nelems does not divide evenly by the rank count,
+// covering remainder chunk sizing.
 int main(int argc, char* argv[])
 {
     MPI_Init(&argc, &argv);
@@ -87,6 +88,34 @@ int main(int argc, char* argv[])
       if(irecv_values[i] != size * i + base) errors++;
     }
     printf("iallreduce rank=%d errors=%d\n", rank, errors);
+
+    if (argc > 1 && strcmp(argv[1], "--sparse-comm") == 0) {
+      MPI_Comm sparse_comm;
+      MPI_Comm_split(MPI_COMM_WORLD, rank % 4, rank, &sparse_comm);
+
+      int sparse_size, sparse_rank;
+      MPI_Comm_size(sparse_comm, &sparse_size);
+      MPI_Comm_rank(sparse_comm, &sparse_rank);
+      int sparse_base = sparse_size * (sparse_size - 1) / 2;
+      const int sparse_nelems = 16;
+      for(int i = 0; i < sparse_nelems; ++i) values[i] = i + sparse_rank;
+
+      MPI_Allreduce(values, recv_values, sparse_nelems, MPI_INT, MPI_SUM,
+                    sparse_comm);
+      MPI_Iallreduce(values, irecv_values, sparse_nelems, MPI_INT, MPI_SUM,
+                     sparse_comm, &req);
+      MPI_Wait(&req, MPI_STATUS_IGNORE);
+      for(int i = 0; i < sparse_nelems; ++i) {
+        int expected = sparse_size * i + sparse_base;
+        if (recv_values[i] != expected || irecv_values[i] != expected) {
+          printf("sparse allreduce rank=%d index=%d expected=%d "
+                 "blocking=%d nonblocking=%d\n", rank, i, expected,
+                 recv_values[i], irecv_values[i]);
+          break;
+        }
+      }
+      MPI_Comm_free(&sparse_comm);
+    }
 
     MPI_Finalize();
 

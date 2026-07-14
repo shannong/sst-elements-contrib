@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright 2009-2026 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
@@ -31,8 +31,7 @@ if __name__ == "__main__":
         "app1.dependencies" : ["sumi", ],
         "app1.libraries" : ["computelibrary:ComputeLibrary",
                             "mask_mpi:MpiApi",],
-        # Select the ring all-reduce (default is recursive doubling)
-        "app1.allreduce_alg" : "ring",
+        "app1.collective.allreduce" : "ring",
     })
 
     topo = topoSingle()
