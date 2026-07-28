@@ -85,7 +85,14 @@ int main(int argc, char* argv[])
     MPI_Wait(&req, MPI_STATUS_IGNORE);
     errors = 0;
     for(int i = 0; i < nelems; ++i) {
-      if(irecv_values[i] != size * i + base) errors++;
+      int expected = size * i + base;
+      if(irecv_values[i] != expected) {
+        if(errors == 0) {
+          printf("iallreduce rank=%d mismatch index=%d expected=%d actual=%d\n",
+                 rank, i, expected, irecv_values[i]);
+        }
+        errors++;
+      }
     }
     printf("iallreduce rank=%d errors=%d\n", rank, errors);
 
