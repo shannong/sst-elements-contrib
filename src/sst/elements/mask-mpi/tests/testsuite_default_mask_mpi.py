@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import subprocess
+import unittest
 from contextlib import contextmanager
 
 from sst_unittest import *
@@ -81,6 +82,8 @@ class testcase_mask_mpi(SSTTestCase):
             expected_stderr="no SMP communicator for hierarchical "
                             "all-reduce; using flat")
 
+    @unittest.skipIf(testing_check_get_num_ranks() > 1,
+                     "sparse communicators are unsupported with multi-rank SST")
     def test_hierarchical_allreduce_sparse_comm_warning(self):
         self.mask_mpi_template(
             "test_hierarchical_allreduce_sparse_comm_warning",

@@ -56,7 +56,7 @@ Questions? Contact sst-macro-help@sandia.gov
 #include <mask_mpi.h>
 #include <mercury/common/skeleton.h>
 
-#define NELEMS 1024
+#define NELEMS 128
 
 int main(int argc, char* argv[])
 {
