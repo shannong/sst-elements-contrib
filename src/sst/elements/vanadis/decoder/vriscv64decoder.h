@@ -23,8 +23,6 @@
 #include <cstdint>
 #include <cstring>
 
-#include <iostream>
-
 #define VANADIS_RISCV_OPCODE_MASK 0x7F
 #define VANADIS_RISCV_RD_MASK     0xF80
 #define VANADIS_RISCV_RS1_MASK    0xF8000
@@ -224,8 +222,6 @@ public:
                             }
                         }
 
-                        // print here to see what's successfully decoded
-                        std::cout << "Adding instruction at address: 0x" << std::hex << next_ins->getInstructionAddress() << std::endl;
                         thread_rob->push(next_ins->clone());
                     }
 
@@ -344,10 +340,8 @@ protected:
         output_->verbose(CALL_INFO, 16, 0, "[decode] -> ins-bytes: 0x%08x\n", ins);
         #endif
 
-        std::cout << "Instruction: " << std::hex << ins << std::endl;
         // We are supposed to have 16b packets for RISCV instructions, if we don't then mark fault
         if ( (ins_address & 0x1) != 0 ) {
-            std::cout << "Decode alignment fault found at instruction address: " << std::hex << ins_address << std::endl;
             bundle->addInstruction(new VanadisInstructionDecodeAlignmentFault(ins_address, hw_thr, options));
             return;
         }
@@ -367,7 +361,6 @@ protected:
 
         bool decode_fault = true;
 
-        uint32_t c_op_code;
         // if the last two bits that are set are 11, then we are performing at least 32bit instruction formats,
         // otherwise we are performing decodes on the C-extension (16b) formats
         if ( (ins & 0x3) == 0x3 ) {
@@ -2595,8 +2588,7 @@ protected:
             }
         }
         else {
-            // const uint32_t c_op_code = ins & 0x3;
-            c_op_code = ins & 0x3;
+            const uint32_t c_op_code = ins & 0x3;
 
             // this bundle only increments the PC by 2, not 4 in 32bit decodes
             bundle->setPCIncrement(2);
@@ -2613,7 +2605,6 @@ protected:
                 case 0x0:
                 {
                     if ( (ins & 0xFFFF) == 0 ) {
-                        std::cout << "Illegal instruction found, all zeros, address: 0x" << std::hex << ins_address << std::endl;
                         // This is an illegal instruction (all zeroes)
                     }
                     else {
@@ -3467,7 +3458,6 @@ protected:
                     ins_address, hw_thr);
             }
 
-            std::cout << "Instruction Default fault for instruction " << ins << ", op code: " << c_op_code << std::endl;
             bundle->addInstruction(new VanadisInstructionDecodeFault(ins_address, hw_thr, options));
         }
     }

@@ -856,7 +856,6 @@ VanadisCore::performRetire(int rob_num, VanadisCircularQueue<VanadisInstruction*
 
     // Instruction is flagging error, print out and halt
     if ( UNLIKELY(rob_front->trapsError()) ) {
-        std::cout << "Instruction error" << std::endl;
         output->verbose(CALL_INFO, 16, 0, "Error has been detected in retired instruction. Retired "
             "register status:\n");
 
@@ -877,7 +876,6 @@ VanadisCore::performRetire(int rob_num, VanadisCircularQueue<VanadisInstruction*
 
     // Instruction is done
     if ( rob_front->completedIssue() && rob_front->completedExecution() ) {
-        std::cout << "CompletedIssue and completedExecution" << std::endl;
         bool     perform_cleanup       = true;
         bool     perform_delay_cleanup = false;
         uint64_t pipeline_reset_addr   = 0;
