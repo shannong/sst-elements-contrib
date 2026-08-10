@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright 2009-2026 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
@@ -152,10 +152,6 @@ mem_params = {
    	"request_width" : "32",
 
     "backend.mem_size" : memory_capacity / (groups * memory_controllers_per_group),
-
-	#"backend": 'memHierarchy.dramsim',
-	#"backend.device_ini" : "ini/DDR3_micron_32M_8B_x4_sg125.ini",
-   	#"backend.system_ini" : "ini/system.ini",
 
 	# simple memory
     "backend.access_time" : "45ns",
