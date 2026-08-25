@@ -615,8 +615,11 @@ VanadisNodeOSComponent::handleIncomingSyscallEvent(SST::Event* ev) {
 
         if ( nullptr != event ) {
             auto syscall = getSyscall( event->getCore(), event->getThread() );
-            syscall->handleEvent( event );
-            processSyscallPost( syscall );
+            if (syscall != nullptr)
+            {
+                syscall->handleEvent( event );
+                processSyscallPost( syscall );
+            }
         } else {
 
             VanadisCheckpointResp* resp = dynamic_cast< VanadisCheckpointResp*>(ev);
@@ -658,8 +661,10 @@ VanadisNodeOSComponent::handleIncomingSyscallEvent(SST::Event* ev) {
 	    auto process = core_info_.at(sys_ev->getCoreID()).getProcess( sys_ev->getThreadID() );
 	    if ( process ) {
 		    auto syscall = handleIncomingSyscall( process, sys_ev, core_links_[ sys_ev->getCoreID() ] );
-
-		    processSyscallPost( syscall );
+            if (syscall != nullptr)
+            {
+    		    processSyscallPost( syscall );                
+            }
 	    } else {
             // Probable error, do not ifdef
 		    output_->output("%s: no active process for core %d, hwthread %d\n", getName().c_str(), sys_ev->getCoreID(), sys_ev->getThreadID() );
