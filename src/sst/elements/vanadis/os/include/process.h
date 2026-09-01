@@ -189,6 +189,7 @@ class ProcessInfo {
         file_table_ = new FileDescriptorTable(output,fp);
 
         thread_group_ = new ThreadGrp;
+        thread_group_->add( this, gettid() );
         futex_ = new Futex;
 
         cpu_mask_.resize( 128, 0 );
