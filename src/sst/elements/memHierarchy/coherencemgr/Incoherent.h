@@ -164,6 +164,9 @@ public:
 
     std::set<Command> getValidReceiveEvents() override;
 
+    /** Snapshot support */
+    void snapshotCache(const std::string& dir, const std::string& cacheName) override;
+
     /** Serialization */
     void serialize_order(SST::Core::Serialization::serializer& ser) override;
     ImplementSerializable(SST::MemHierarchy::Incoherent)

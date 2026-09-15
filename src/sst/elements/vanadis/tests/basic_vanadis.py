@@ -235,6 +235,8 @@ osl1cacheParams = {
     "L1" : "1",
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 
 mmuParams = {
@@ -360,6 +362,8 @@ l1dcacheParams = {
     "L1" : "1",
     "debug" : l1_debug | mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 
 l1icacheParams = {
@@ -375,6 +379,8 @@ l1icacheParams = {
     "L1" : "1",
     "debug" : l1_debug | mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 
 l2cacheParams = {
@@ -388,6 +394,8 @@ l2cacheParams = {
     "mshr_latency_cycles": 3,
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 busParams = {
     "bus_frequency" : cpu_clock,

@@ -638,6 +638,10 @@ void Cache::finish() {
         listeners_[i]->printStats(*out_);
     linkDown_->finish();
     if (linkUp_ != linkDown_) linkUp_->finish();
+
+    if (snapshot_ == "save" && !snapshot_dir_.empty()) {
+        coherenceMgr_->snapshotCache(snapshot_dir_, getName());
+    }
 }
 
 
@@ -698,6 +702,9 @@ void Cache::serialize_order(SST::Core::Serialization::serializer& ser) {
     SST_SER(timeout_);
     SST_SER(maxOutstandingPrefetch_);
     SST_SER(banked_);
+
+    SST_SER(snapshot_dir_);
+    SST_SER(snapshot_);
 
     SST_SER(clockHandler_);
     SST_SER(defaultTimeBase_);

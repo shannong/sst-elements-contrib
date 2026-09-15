@@ -16,6 +16,8 @@
 #ifndef CACHEARRAY_H
 #define CACHEARRAY_H
 
+#include <cinttypes>
+#include <cstdio>
 #include <vector>
 
 #include <sst/core/output.h>
@@ -89,6 +91,10 @@ class CacheArray {
         void setSliceAware(Addr size, Addr step);
         void setBanked(unsigned int numBanks);
         void printCacheArray(Output &out);
+
+    /**** Snapshot support */
+        /** Write allocated cache lines (address + state) to a file */
+        void snapshotToFile(FILE* fp);
 
     /**** Cache iterators */
         struct cache_itr {
@@ -235,6 +241,25 @@ template <class T>
 void CacheArray<T>::printCacheArray(Output &out) {
     for (unsigned int i = 0; i < num_lines_; i++) {
         out.output("   %u %s\n", i, lines_[i]->getString().c_str());
+    }
+}
+
+template <class T>
+void CacheArray<T>::snapshotToFile(FILE* fp) {
+    unsigned int allocated = 0;
+    for (unsigned int i = 0; i < num_lines_; i++) {
+        if (lines_[i]->isAllocated()) allocated++;
+    }
+    fprintf(fp, "num_sets: %u\n", num_sets_);
+    fprintf(fp, "num_lines: %u\n", num_lines_);
+    fprintf(fp, "associativity: %u\n", associativity_);
+    fprintf(fp, "line_size: %u\n", line_size_);
+    fprintf(fp, "num_allocated: %u\n", allocated);
+    for (unsigned int i = 0; i < num_lines_; i++) {
+        if (lines_[i]->isAllocated()) {
+            fprintf(fp, "0x%" PRIx64 " %s\n",
+                (uint64_t) lines_[i]->getAddr(), StateString[lines_[i]->getState()]);
+        }
     }
 }
 

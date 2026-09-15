@@ -2942,6 +2942,17 @@ std::set<Command> MESIPrivNoninclusive::getValidReceiveEvents() {
     return cmds;
 }
 
+void MESIPrivNoninclusive::snapshotCache(const std::string& dir, const std::string& cacheName) {
+    std::string filename = dir + "/" + cacheName;
+    FILE* fp = fopen(filename.c_str(), "w");
+    if (!fp) {
+        output_->fatal(CALL_INFO, -1, "Failed to open snapshot file: %s\n", filename.c_str());
+    }
+    fprintf(fp, "# Cache Snapshot: %s\n", cacheName.c_str());
+    cache_array_->snapshotToFile(fp);
+    fclose(fp);
+}
+
 void MESIPrivNoninclusive::serialize_order(SST::Core::Serialization::serializer& ser) {
     CoherenceController::serialize_order(ser);
 

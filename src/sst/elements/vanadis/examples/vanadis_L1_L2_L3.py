@@ -238,6 +238,8 @@ osl1cacheParams = {
     "L1" : "1",
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 
 # Parameters for the memory management unit
@@ -371,6 +373,8 @@ l1dcacheParams = {
     "L1" : "1",
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 
 # L1 I cache parameters
@@ -387,6 +391,8 @@ l1icacheParams = {
     "L1" : "1",
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 
 # L2 cache parameters
@@ -401,6 +407,8 @@ l2cacheParams = {
     "mshr_latency_cycles": 3,
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 }
 
 # Bus paremeters (connecting L1 caches to L2 cache)
@@ -596,6 +604,8 @@ cpu_l3cache.addParams({
     "mshr_latency_cycles": 3,
     "debug" : mh_debug,
     "debug_level" : mh_debug_level,
+    "snapshotDir" : snapshotDir,
+    "snapshot" : snapshot,
 })
 
 # Define how the L3 cache will connect towards the CPU. In this case the next component
