@@ -18,6 +18,7 @@
 
 #include <cinttypes>
 #include <cstdio>
+#include <type_traits>
 #include <vector>
 
 #include <sst/core/output.h>
@@ -93,7 +94,9 @@ class CacheArray {
         void printCacheArray(Output &out);
 
     /**** Snapshot support */
-        /** Write allocated cache lines (address + state) to a file */
+        /** Write allocated cache lines (address, state, and data) to a file.
+         *  For line types with data (all except DirectoryLine), hex-encoded
+         *  cache line data bytes are written after the state. */
         void snapshotToFile(FILE* fp);
 
     /**** Cache iterators */
@@ -257,8 +260,16 @@ void CacheArray<T>::snapshotToFile(FILE* fp) {
     fprintf(fp, "num_allocated: %u\n", allocated);
     for (unsigned int i = 0; i < num_lines_; i++) {
         if (lines_[i]->isAllocated()) {
-            fprintf(fp, "0x%" PRIx64 " %s\n",
+            fprintf(fp, "0x%" PRIx64 " %s",
                 (uint64_t) lines_[i]->getAddr(), StateString[lines_[i]->getState()]);
+            if constexpr (!std::is_same_v<T, DirectoryLine>) {
+                vector<uint8_t>* data = lines_[i]->getData();
+                fprintf(fp, " ");
+                for (uint32_t b = 0; b < line_size_; b++) {
+                    fprintf(fp, "%02x", (*data)[b]);
+                }
+            }
+            fprintf(fp, "\n");
         }
     }
 }
