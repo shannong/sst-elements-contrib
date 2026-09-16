@@ -90,7 +90,7 @@ public:
             {"banks",                   "(uint) Number of cache banks: One access per bank per cycle. Use '0' to simulate no bank limits (only limits on bandwidth then are max_requests_per_cycle and *_link_width", "0"},
             {"node",			        "(uint) Node number in multinode environment", "0"},
             {"snapshotDir",             "(string) Directory for snapshot output files. Leave empty to disable.", ""},
-            {"snapshot",                "(string) Snapshot mode. Options: ''[disabled], 'save'[write cache contents to file at finish]", ""})
+            {"snapshot",                "(string) Snapshot mode. Options: ''[disabled], 'save'[write cache contents at finish], 'load'[restore cache contents at setup]", ""})
 
     SST_ELI_DOCUMENT_PORTS(
             {"highlink",        "Non-network upper/processor-side link (i.e., link towards the core/accelerator/etc.). This port loads the 'memHierarchy.MemLink' manager. "

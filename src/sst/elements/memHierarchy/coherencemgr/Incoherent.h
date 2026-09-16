@@ -166,6 +166,7 @@ public:
 
     /** Snapshot support */
     void snapshotCache(const std::string& dir, const std::string& cacheName) override;
+    void snapshotLoadCache(const std::string& dir, const std::string& cacheName) override;
 
     /** Serialization */
     void serialize_order(SST::Core::Serialization::serializer& ser) override;

@@ -99,6 +99,10 @@ class CacheArray {
          *  cache line data bytes are written after the state. */
         void snapshotToFile(FILE* fp);
 
+        /** Load cache lines (address, state, and data) from a snapshot file.
+         *  Validates that cache geometry matches. Fatal on mismatch. */
+        void snapshotLoadFromFile(FILE* fp);
+
     /**** Cache iterators */
         struct cache_itr {
             public:
@@ -271,6 +275,84 @@ void CacheArray<T>::snapshotToFile(FILE* fp) {
             }
             fprintf(fp, "\n");
         }
+    }
+}
+
+template <class T>
+void CacheArray<T>::snapshotLoadFromFile(FILE* fp) {
+    unsigned int file_num_sets, file_num_lines, file_associativity, file_num_allocated;
+    uint32_t file_line_size;
+
+    if (5 != fscanf(fp, "num_sets: %u\n"
+                        "num_lines: %u\n"
+                        "associativity: %u\n"
+                        "line_size: %u\n"
+                        "num_allocated: %u\n",
+                    &file_num_sets, &file_num_lines, &file_associativity,
+                    &file_line_size, &file_num_allocated)) {
+        debug_->fatal(CALL_INFO, -1, "CacheArray::snapshotLoadFromFile: Failed to parse snapshot header\n");
+    }
+
+    if (file_num_sets != num_sets_ || file_associativity != associativity_ || file_line_size != line_size_) {
+        debug_->fatal(CALL_INFO, -1,
+            "CacheArray::snapshotLoadFromFile: Cache geometry mismatch. "
+            "File: sets=%u assoc=%u linesize=%u, Current: sets=%u assoc=%u linesize=%u\n",
+            file_num_sets, file_associativity, file_line_size,
+            num_sets_, associativity_, line_size_);
+    }
+
+    char state_str[64];
+    uint64_t addr;
+    std::vector<char> hex_buf(line_size_ * 2 + 1);
+
+    for (unsigned int n = 0; n < file_num_allocated; n++) {
+        if (2 != fscanf(fp, " 0x%" PRIx64 " %63s", &addr, state_str)) {
+            debug_->fatal(CALL_INFO, -1,
+                "CacheArray::snapshotLoadFromFile: Failed to parse entry %u\n", n);
+        }
+
+        std::vector<uint8_t> data_vec;
+        if constexpr (!std::is_same_v<T, DirectoryLine>) {
+            if (1 != fscanf(fp, " %s", hex_buf.data())) {
+                debug_->fatal(CALL_INFO, -1,
+                    "CacheArray::snapshotLoadFromFile: Failed to parse data for entry %u\n", n);
+            }
+            data_vec.resize(line_size_);
+            for (uint32_t b = 0; b < line_size_; b++) {
+                unsigned int byte_val;
+                sscanf(&hex_buf[b * 2], "%02x", &byte_val);
+                data_vec[b] = (uint8_t)byte_val;
+            }
+        }
+
+        State state = stringToState(state_str);
+
+        // Find the correct set
+        Addr laddr = toLineAddr(addr);
+        int set = hash_->hash(0, laddr) % num_sets_;
+        int setBegin = set * associativity_;
+        int setEnd = setBegin + associativity_;
+
+        // Find a free line in the set
+        int idx = -1;
+        for (int i = setBegin; i < setEnd; i++) {
+            if (!lines_[i]->isAllocated()) {
+                idx = i;
+                break;
+            }
+        }
+        if (idx < 0) {
+            debug_->fatal(CALL_INFO, -1,
+                "CacheArray::snapshotLoadFromFile: No free line in set %d for addr 0x%" PRIx64 "\n",
+                set, addr);
+        }
+
+        lines_[idx]->setAddr(addr);
+        lines_[idx]->setState(state);
+        if constexpr (!std::is_same_v<T, DirectoryLine>) {
+            lines_[idx]->setData(data_vec, 0);
+        }
+        replacement_mgr_->update(idx, lines_[idx]->getReplacementInfo());
     }
 }
 

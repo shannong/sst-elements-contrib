@@ -851,6 +851,10 @@ void CoherenceController::snapshotCache(const std::string& dir, const std::strin
     // Default: no-op. Subclasses with cache arrays override this.
 }
 
+void CoherenceController::snapshotLoadCache(const std::string& dir, const std::string& cacheName) {
+    // Default: no-op. Subclasses with cache arrays override this.
+}
+
 /**************************************/
 /******* Manage outgoing events *******/
 /**************************************/

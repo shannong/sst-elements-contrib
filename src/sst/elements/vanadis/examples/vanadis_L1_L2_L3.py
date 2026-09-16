@@ -269,7 +269,9 @@ dirCtrlParams = {
       "debug" : mh_debug,
       "debug_level" : mh_debug_level,
       "addr_range_start" : "0x0",
-      "addr_range_end" : "0xFFFFFFFF"
+      "addr_range_end" : "0xFFFFFFFF",
+      "snapshotDir" : snapshotDir,
+      "snapshot" : snapshot,
 }
 
 # Dorectpru NIC parameters

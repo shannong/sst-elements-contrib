@@ -2865,6 +2865,20 @@ void MESIInclusive::snapshotCache(const std::string& dir, const std::string& cac
     fclose(fp);
 }
 
+void MESIInclusive::snapshotLoadCache(const std::string& dir, const std::string& cacheName) {
+    std::string filename = dir + "/" + cacheName;
+    FILE* fp = fopen(filename.c_str(), "r");
+    if (!fp) {
+        output_->fatal(CALL_INFO, -1, "Failed to open snapshot file for loading: %s\n", filename.c_str());
+    }
+    char buf[512];
+    if (!fgets(buf, sizeof(buf), fp)) {
+        output_->fatal(CALL_INFO, -1, "Failed to read snapshot header from: %s\n", filename.c_str());
+    }
+    cache_array_->snapshotLoadFromFile(fp);
+    fclose(fp);
+}
+
 
 /***********************************************************************************************************
  * Cache flush at simulation shutdown

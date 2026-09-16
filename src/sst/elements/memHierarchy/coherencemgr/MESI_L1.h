@@ -223,6 +223,7 @@ public:
 
     /** Snapshot support */
     void snapshotCache(const std::string& dir, const std::string& cacheName) override;
+    void snapshotLoadCache(const std::string& dir, const std::string& cacheName) override;
 
     /* LoadLink wakeup event */
     class LoadLinkWakeup : public SST::Event {
