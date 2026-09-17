@@ -33,8 +33,6 @@
 #include "utils.h"
 #include "sst/elements/mmu/utils.h"
 
-#include <iostream>
-
 using namespace SST::Vanadis;
 
 VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Params& params)
