@@ -18,6 +18,7 @@
 
 
 #include <sst/core/params.h>
+#include <sys/stat.h>
 
 #include "memNIC.h"
 
@@ -547,6 +548,45 @@ bool DirectoryController::processPacket(MemEvent * ev, bool replay) {
         case Command::FlushAll:
             retval = handleFlushAll(ev, replay);
             break;
+        case Command::SnapshotAll:
+        {
+            if (!snapshot_dir_.empty()) {
+                std::string snapDir = snapshot_dir_ + "/snap_" + std::to_string(ev->getAddr());
+                mkdir(snapDir.c_str(), 0755);
+                std::string filename = snapDir + "/" + getName();
+                FILE* fp = fopen(filename.c_str(), "w");
+                if (!fp) {
+                    out.fatal(CALL_INFO, -1, "Failed to open directory snapshot file: %s\n", filename.c_str());
+                }
+                fprintf(fp, "# Directory Snapshot: %s\n", getName().c_str());
+                size_t count = 0;
+                for (auto& kv : directory) {
+                    if (kv.second->getState() != I) count++;
+                }
+                fprintf(fp, "num_entries: %zu\n", count);
+                for (auto& kv : directory) {
+                    DirEntry* de = kv.second;
+                    if (de->getState() == I) continue;
+                    fprintf(fp, "entry: 0x%" PRIx64 " %s\n",
+                        (uint64_t)de->getBaseAddr(), StateString[de->getState()]);
+                    fprintf(fp, "owner: %s\n", de->hasOwner() ? de->getOwner().c_str() : "");
+                    std::set<std::string>* sharers = de->getSharers();
+                    fprintf(fp, "sharers: %zu", sharers->size());
+                    for (auto& shr : *sharers) {
+                        fprintf(fp, " %s", shr.c_str());
+                    }
+                    fprintf(fp, "\n");
+                }
+                fclose(fp);
+            }
+            /* Forward to memory controller */
+            MemEvent* forward = new MemEvent(*ev);
+            forward->setSrc(getName());
+            forwardByAddress(forward, timestamp + 1);
+            delete ev;
+            retval = true;
+            break;
+        }
         case Command::FetchInv:
             retval = handleFetchInv(ev, replay);
             break;

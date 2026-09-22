@@ -18,6 +18,8 @@
 
 #include "coherencemgr/coherenceController.h"
 
+#include <sys/stat.h>
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 
@@ -223,6 +225,7 @@ bool CoherenceController::handleSnapshotAll(MemEvent* event, bool in_mshr) {
     /* Save cache state to snapshot subdirectory */
     if (!snapshot_dir_.empty()) {
         std::string snapDir = snapshot_dir_ + "/snap_" + std::to_string(event->getAddr());
+        mkdir(snapDir.c_str(), 0755);
         snapshotCache(snapDir, cachename_);
     }
 

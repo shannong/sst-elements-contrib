@@ -15,6 +15,7 @@
 
 #include <sst/core/sst_config.h>
 #include <sst/core/params.h>
+#include <sys/stat.h>
 
 
 #include "memoryController.h"
@@ -73,6 +74,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     } else {
         checkpoint_ = NO_CHECKPOINT;
     }
+
+    snapshot_dir_ = params.find<std::string>("snapshotDir", "");
 
     bool initBacking = params.find<bool>("backing_init_zero", false);
     // Debug address
@@ -385,6 +388,24 @@ void MemController::handleEvent(SST::Event* event) {
         return;
     }
 
+    /* Handle SnapshotAll before address validation since it carries a
+     * sequence number in the address field, not a real memory address */
+    if (cmd == Command::SnapshotAll) {
+        if (backing_ && !snapshot_dir_.empty()) {
+            MemEvent* ev = static_cast<MemEvent*>(meb);
+            std::string snapDir = snapshot_dir_ + "/snap_" + std::to_string(ev->getAddr());
+            mkdir(snapDir.c_str(), 0755);
+            std::string filename = snapDir + "/memory.out";
+            try {
+                backing_->printToFile(filename);
+            } catch (int e) {
+                out.output("%s, WARNING: Unable to write memory snapshot to '%s'\n", getName().c_str(), filename.c_str());
+            }
+        }
+        delete meb;
+        return;
+    }
+
     MemEvent * ev = static_cast<MemEvent*>(meb);
 
 #ifdef __SST_DEBUG_OUTPUT__
@@ -483,7 +504,6 @@ void MemController::handleEvent(SST::Event* event) {
                 delete ev;
             }
             break;
-
         case Command::PutS:
         case Command::PutE:
             delete ev;
@@ -919,6 +939,7 @@ void MemController::serialize_order(SST::Core::Serialization::serializer& ser) {
 
     //SST_SER(listeners_);
     SST_SER(checkpointDir_);
+    SST_SER(snapshot_dir_);
 
     SST_SER(memSize_);
 
