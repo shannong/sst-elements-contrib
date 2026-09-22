@@ -25,6 +25,7 @@
 #include <cstdio>
 #include <sst/core/output.h>
 #include <vector>
+#include <sys/stat.h>
 
 #include <iostream>
 
@@ -1385,7 +1386,7 @@ VanadisCore::tick(SST::Cycle_t cycle)
         for ( uint32_t i = 0; i < hw_threads; ++i ) {
             should_process = should_process | ! halted_masks[i];
         }
-        // if all theads have halted
+        // if all threads have halted
         if ( ! should_process ) {
             lsq->tick((uint64_t)cycle);
             #ifdef VANADIS_BUILD_DEBUG
@@ -1393,11 +1394,32 @@ VanadisCore::tick(SST::Cycle_t cycle)
             #endif
             if ( 0 == lsq->storeSize() && 0 == lsq->loadSize() ) {
                 #ifdef VANADIS_BUILD_DEBUG
-                output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"checkingpoint core %d all threads have halted\n",core_id);
+                output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"snapshot core %d all threads have halted\n",core_id);
                 #endif
+
+                // Write core register snapshot inline
+                assert( ! m_snapshotDir.empty() );
+                std::string snapDir = m_snapshotDir + "/snap_" + std::to_string(m_snapshotCount);
+                mkdir(snapDir.c_str(), 0755);
+                std::string filename = snapDir + "/" + getName();
+                FILE* fp = fopen(filename.c_str(), "w+");
+                assert(fp);
+                output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,
+                    "Snapshot component `%s` %s\n", getName().c_str(), filename.c_str());
+                snapshot(fp);
+                fclose(fp);
+
+                // Notify OS that core snapshot is complete
                 VanadisSnapshottResp* resp = new VanadisSnapshottResp( core_id );
                 os_link->send( resp );
-                return true;
+
+                // Clear snapshot state and resume threads
+                delete[] m_snapshotting;
+                m_snapshotting = nullptr;
+                for ( uint32_t i = 0; i < hw_threads; ++i ) {
+                    halted_masks[i] = false;
+                }
+                m_snapshotCount++;
             }
         }
     }
@@ -2012,7 +2034,11 @@ void
 VanadisCore::finish()
 {
 
-    if ( LIKELY( nullptr == m_snapshotting ) ) return;
+    // If inline snapshots were taken during simulation, nothing to do here
+    if ( m_snapshotCount > 0 ) return;
+
+    // No inline snapshots — fall back to finish()-time write for backward compatibility
+    if ( nullptr == m_snapshotting ) return;
 
     if ( SNAPSHOT_SAVE == m_snapshot ) {
         assert( ! m_snapshotDir.empty() );
