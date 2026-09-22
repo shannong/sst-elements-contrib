@@ -290,6 +290,9 @@ bool Cache::processEvent(MemEventBase* ev, bool retry) {
         case Command::FlushAll:
             accepted = coherenceMgr_->handleFlushAll(event, retry);
             break;
+        case Command::SnapshotAll:
+            accepted = coherenceMgr_->handleSnapshotAll(event, retry);
+            break;
         case Command::GetSResp:
             accepted = coherenceMgr_->handleGetSResp(event, retry);
             break;
