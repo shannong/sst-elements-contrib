@@ -2033,25 +2033,6 @@ VanadisCore::setup()
 void
 VanadisCore::finish()
 {
-
-    // If inline snapshots were taken during simulation, nothing to do here
-    if ( m_snapshotCount > 0 ) return;
-
-    // No inline snapshots — fall back to finish()-time write for backward compatibility
-    if ( nullptr == m_snapshotting ) return;
-
-    if ( SNAPSHOT_SAVE == m_snapshot ) {
-        assert( ! m_snapshotDir.empty() );
-
-        std::stringstream filename;
-        filename << m_snapshotDir << "/" << getName();
-        auto fp = fopen(filename.str().c_str(),"w+");
-        assert(fp);
-
-        output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"Snapshot component `%s` %s\n",getName().c_str(), filename.str().c_str());
-
-        snapshot(fp);
-    }
 }
 
 void

@@ -19,6 +19,7 @@
 
 #include <math.h>
 #include <functional>
+#include <sys/stat.h>
 
 #include "os/vnodeos.h"
 #include "vanadisDbgFlags.h"
@@ -32,6 +33,7 @@
 #include "os/vdumpregsreq.h"
 #include "utils.h"
 #include "sst/elements/mmu/utils.h"
+#include "sst/elements/memHierarchy/snapshotCustomData.h"
 
 using namespace SST::Vanadis;
 
@@ -261,13 +263,6 @@ VanadisNodeOSComponent::setup() {
 
 void
 VanadisNodeOSComponent::finish() {
-
-
-    if ( SNAPSHOT_SAVE == enable_snapshot_ ) {
-        if ( UNLIKELY( ! snapshot_dir_.empty() ) ) {
-            snapshot( snapshot_dir_ );
-        }
-    }
 }
 
 void
@@ -508,12 +503,7 @@ void VanadisNodeOSComponent::handleIncomingMemoryCallback(StandardMem::Request* 
                 output_->fatal(CALL_INFO, -1, "Error - received StandardMem response that does not match PageWrite request\n");
             }
         } else {
-//            output_->fatal(CALL_INFO, -1, "Error - received StandardMem response that does not belong to a core\n");
-            flush_pages_.pop_front();
-            if ( flush_pages_.empty() ) {
-                primaryComponentOKToEndSim();
-            }
-
+            output_->fatal(CALL_INFO, -1, "Error - received StandardMem response that does not belong to a core\n");
         }
     } else if (lookup_result != mem_resp_map_.end()) {
         handleIncomingMemory( lookup_result->second, ev );
@@ -622,33 +612,20 @@ VanadisNodeOSComponent::handleIncomingSyscallEvent(SST::Event* ev) {
 
             VanadisSnapshottResp* resp = dynamic_cast< VanadisSnapshottResp*>(ev);
             if ( nullptr != resp ) {
-                output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"snapshot \n");
-             //   primaryComponentOKToEndSim();
+                output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"snapshot response from core\n");
 
-                flush_pages_.push_back( 0x2bc0 );
-                flush_pages_.push_back( 0x163c0 );
-                flush_pages_.push_back( 0x16400 );
-                flush_pages_.push_back( 0x90c0 );
-                flush_pages_.push_back( 0x2c80 );
-                flush_pages_.push_back( 0x2c00 );
-                flush_pages_.push_back( 0x1b00 );
+                // Write OS state into snap_N/ subdirectory
+                std::string snapDir = snapshot_dir_ + "/snap_" + std::to_string(snapshot_count_);
+                mkdir(snapDir.c_str(), 0755);
+                snapshot(snapDir);
 
-                flush_pages_.push_back( 0x1b000 );
-                flush_pages_.push_back( 0x2b80 );
-                flush_pages_.push_back( 0x2980 );
-                flush_pages_.push_back( 0x2a00 );
-                flush_pages_.push_back( 0x2940 );
-                flush_pages_.push_back( 0x2900 );
-                flush_pages_.push_back( 0x3f80 );
-                flush_pages_.push_back( 0x2800 );
-                flush_pages_.push_back( 0x29c0 );
-                flush_pages_.push_back( 0x28c0 );
+                // Send snapshot request into the memory hierarchy via CustomReq.
+                // The L1 cache intercepts this and injects a SnapshotAll MemEvent.
+                StandardMem::Request* req = new SST::Interfaces::StandardMem::CustomReq(
+                    new SST::MemHierarchy::SnapshotCustomData(snapshot_count_));
+                mem_if_->send(req);
 
-                for ( auto & x : flush_pages_ ) {
-                    printf("%#" PRIx64 "\n",x);
-                    StandardMem::Request* req = new SST::Interfaces::StandardMem::FlushAddr( x, 64, true, 5, 0 );
-                    mem_if_->send(req);
-                }
+                snapshot_count_++;
             } else {
                 output_->fatal(CALL_INFO, -1,
                       "Error - received an event in the OS, but cannot cast it to "

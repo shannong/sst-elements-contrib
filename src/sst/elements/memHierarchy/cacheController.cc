@@ -17,9 +17,12 @@
 #include <sst/core/params.h>
 #include <sst/core/interfaces/stringEvent.h>
 #include <sst/core/timeLord.h>
+#include <sys/stat.h>
 
 #include "cacheController.h"
 #include "memEvent.h"
+#include "memEventCustom.h"
+#include "snapshotCustomData.h"
 #include "mshr.h"
 #include "coherencemgr/coherenceController.h"
 
@@ -241,6 +244,32 @@ bool Cache::processEvent(MemEventBase* ev, bool retry) {
     // Global noncacheable request flag
     if (allNoncacheableRequests_) {
         ev->setFlag(MemEvent::F_NONCACHEABLE);
+    }
+
+    // Intercept CustomReq carrying a snapshot request.  The OS sends this
+    // via StandardMem::CustomReq; we convert it to a SnapshotAll MemEvent
+    // here so the rest of the hierarchy uses proper command dispatch.
+    if (ev->getCmd() == Command::CustomReq) {
+        CustomMemEvent* cme = dynamic_cast<CustomMemEvent*>(ev);
+        if (cme) {
+            SnapshotCustomData* snapData =
+                dynamic_cast<SnapshotCustomData*>(cme->getCustomData());
+            if (snapData) {
+                if (!snapshot_dir_.empty()) {
+                    std::string snapDir = snapshot_dir_ + "/snap_"
+                        + std::to_string(snapData->getSeqNum());
+                    mkdir(snapDir.c_str(), 0755);
+                    coherenceMgr_->snapshotCache(snapDir, getName());
+                }
+                MemEvent* snap = new MemEvent(getName(), Command::SnapshotAll);
+                snap->setAddr(snapData->getSeqNum());
+                snap->setBaseAddr(snapData->getSeqNum());
+                snap->setFlag(MemEventBase::F_NORESPONSE);
+                coherenceMgr_->forwardByAddress(snap);
+                delete ev;
+                return true;
+            }
+        }
     }
 
     if (MemEventTypeArr[(int)ev->getCmd()] != MemEventType::Cache || ev->queryFlag(MemEventBase::F_NONCACHEABLE)) {
@@ -645,10 +674,6 @@ void Cache::finish() {
         listeners_[i]->printStats(*out_);
     linkDown_->finish();
     if (linkUp_ != linkDown_) linkUp_->finish();
-
-    if (snapshot_ == "save" && !snapshot_dir_.empty()) {
-        coherenceMgr_->snapshotCache(snapshot_dir_, getName());
-    }
 }
 
 

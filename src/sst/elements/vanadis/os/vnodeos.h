@@ -428,7 +428,7 @@ private:
 
     void snapshot( std::string dir );
     int snapshotLoad( std::string dir );
-    std::deque<uint64_t> flush_pages_;
+    uint32_t snapshot_count_ = 0;
 };
 
 } // namespace Vanadis

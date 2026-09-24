@@ -850,34 +850,6 @@ void DirectoryController::complete(unsigned int phase) {
 
 void DirectoryController::finish(void){
     linkUp_->finish();
-
-    if (snapshot_ == "save" && !snapshot_dir_.empty()) {
-        std::string filename = snapshot_dir_ + "/" + getName();
-        FILE* fp = fopen(filename.c_str(), "w");
-        if (!fp) {
-            out.fatal(CALL_INFO, -1, "Failed to open directory snapshot file: %s\n", filename.c_str());
-        }
-        fprintf(fp, "# Directory Snapshot: %s\n", getName().c_str());
-        size_t count = 0;
-        for (auto& kv : directory) {
-            if (kv.second->getState() != I) count++;
-        }
-        fprintf(fp, "num_entries: %zu\n", count);
-        for (auto& kv : directory) {
-            DirEntry* de = kv.second;
-            if (de->getState() == I) continue;
-            fprintf(fp, "entry: 0x%" PRIx64 " %s\n",
-                (uint64_t)de->getBaseAddr(), StateString[de->getState()]);
-            fprintf(fp, "owner: %s\n", de->hasOwner() ? de->getOwner().c_str() : "");
-            std::set<std::string>* sharers = de->getSharers();
-            fprintf(fp, "sharers: %zu", sharers->size());
-            for (auto& shr : *sharers) {
-                fprintf(fp, " %s", shr.c_str());
-            }
-            fprintf(fp, "\n");
-        }
-        fclose(fp);
-    }
 }
 
 
