@@ -63,6 +63,7 @@ VanadisCore::VanadisCore(SST::ComponentId_t id, SST::Params& params) : Component
     free(output_prefix);
 
     m_snapshotDir = params.find<std::string>("snapshotDir", "");
+    m_snapshotIndex = params.find<uint32_t>("snapshotIndex", 0);
     auto tmp = params.find<std::string>("snapshot", "" );
     if ( ! tmp.empty( ) ) {
         assert( ! m_snapshotDir.empty() );
@@ -2022,7 +2023,7 @@ VanadisCore::setup()
 {
     if ( SNAPSHOT_LOAD == m_snapshot ) {
         std::stringstream filename;
-        filename << m_snapshotDir << "/" << getName();
+        filename << m_snapshotDir << "/snap_" << m_snapshotIndex << "/" << getName();
         output->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"snapshot file %s\n",filename.str().c_str());
         auto fp = fopen(filename.str().c_str(),"r");
         assert(fp);
