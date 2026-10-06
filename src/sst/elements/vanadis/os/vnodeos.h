@@ -424,6 +424,7 @@ private:
     }
 
     std::string snapshot_dir_;
+    uint32_t snapshot_index_ = 0;
     enum { NO_SNAPSHOT, SNAPSHOT_LOAD, SNAPSHOT_SAVE }  enable_snapshot_;
 
     void snapshot( std::string dir );

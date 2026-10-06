@@ -52,6 +52,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     free(output_prefix);
 
     snapshot_dir_ = params.find<std::string>("snapshotDir", "");
+    snapshot_index_ = params.find<uint32_t>("snapshotIndex", 0);
     auto tmp = params.find<std::string>("snapshot", "");
     if ( ! tmp.empty() ) {
         assert( ! snapshot_dir_.empty() );
@@ -335,14 +336,16 @@ int VanadisNodeOSComponent::snapshotLoad( std::string dir )
 {
     size_t size;
     int process_number = 0;
+    
+    std::string actualDir = dir + "/snap_" + std::to_string(snapshot_index_) + "/";
     std::stringstream filename;
-    filename << snapshot_dir_ << "/" << getName();
+    filename << actualDir << getName();
     output_->verbose(CALL_INFO, 0, VANADIS_DBG_SNAPSHOT,"Snapshot component `%s` %s\n",getName().c_str(), filename.str().c_str());
     auto fp = fopen(filename.str().c_str(),"r");
     assert(fp);
 
-    mmu_->snapshotLoad( dir );
-    phys_mem_mgr_->snapshotLoad( output_, dir );
+    mmu_->snapshotLoad( actualDir );
+    phys_mem_mgr_->snapshotLoad( output_, actualDir );
 
     // load ELF map
     assert( 1 == fscanf(fp,"elf_map_.size() %zu\n",&size) );
