@@ -69,6 +69,7 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
 
     /* Snapshot configuration */
     snapshot_dir_               = params.find<std::string>("snapshotDir", "");
+    snapshot_index_             = params.find<uint32_t>("snapshotIndex", 0);
     snapshot_                   = params.find<std::string>("snapshot", "");
 
     try {

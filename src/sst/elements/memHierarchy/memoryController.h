@@ -157,6 +157,7 @@ protected:
     std::string checkpointDir_;
     enum { NO_CHECKPOINT, CHECKPOINT_LOAD, CHECKPOINT_SAVE }  checkpoint_;
     std::string snapshot_dir_;
+    uint32_t snapshot_index_ = 0;
 
     size_t memSize_;
 

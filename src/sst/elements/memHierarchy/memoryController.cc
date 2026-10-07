@@ -76,6 +76,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     }
 
     snapshot_dir_ = params.find<std::string>("snapshotDir", "");
+    snapshot_index_ = params.find<uint32_t>("snapshotIndex", 0);
 
     bool initBacking = params.find<bool>("backing_init_zero", false);
     // Debug address
@@ -393,9 +394,8 @@ void MemController::handleEvent(SST::Event* event) {
     if (cmd == Command::SnapshotAll) {
         if (backing_ && !snapshot_dir_.empty()) {
             MemEvent* ev = static_cast<MemEvent*>(meb);
-            std::string snapDir = snapshot_dir_ + "/snap_" + std::to_string(ev->getAddr());
-            mkdir(snapDir.c_str(), 0755);
-            std::string filename = snapDir + "/memory.out";
+            std::string actualDir = snapshot_dir_ + "/snap_" + std::to_string(snapshot_index_) + "/";
+            std::string filename = actualDir + "memory.out";
             try {
                 backing_->printToFile(filename);
             } catch (int e) {

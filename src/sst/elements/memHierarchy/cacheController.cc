@@ -618,7 +618,8 @@ void Cache::processInitCoherenceEvent(MemEventInitCoherence* event, bool src) {
 
 void Cache::setup() {
     if (snapshot_ == "load" && !snapshot_dir_.empty()) {
-        coherenceMgr_->snapshotLoadCache(snapshot_dir_, getName());
+        std::string actualDir = snapshot_dir_ + "/snap_" + std::to_string(snapshot_index_) + "/";
+        coherenceMgr_->snapshotLoadCache(actualDir, getName());
     }
 
     // Check that our sources and destinations exist or configure if needed
