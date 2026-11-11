@@ -675,6 +675,10 @@ void Cache::finish() {
         listeners_[i]->printStats(*out_);
     linkDown_->finish();
     if (linkUp_ != linkDown_) linkUp_->finish();
+
+    if (snapshot_ == "save" && !snapshot_dir_.empty()) {
+        coherenceMgr_->snapshotCache(snapshot_dir_, getName());
+    }
 }
 
 

@@ -264,6 +264,13 @@ VanadisNodeOSComponent::setup() {
 
 void
 VanadisNodeOSComponent::finish() {
+
+
+    if ( SNAPSHOT_SAVE == enable_snapshot_ ) {
+        if ( UNLIKELY( ! snapshot_dir_.empty() ) ) {
+            snapshot( snapshot_dir_ );
+        }
+    }
 }
 
 void
@@ -641,7 +648,7 @@ VanadisNodeOSComponent::handleIncomingSyscallEvent(SST::Event* ev) {
 		    auto syscall = handleIncomingSyscall( process, sys_ev, core_links_[ sys_ev->getCoreID() ] );
             if (syscall != nullptr)
             {
-    		    processSyscallPost( syscall );                
+    		    processSyscallPost( syscall );
             }
 	    } else {
             // Probable error, do not ifdef
